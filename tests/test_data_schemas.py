@@ -39,7 +39,7 @@ def test_options_contract_schema():
     assert contract.iv == 0.2
 
 
-def test_equity_bar_validation():
+def test_equity_bar_validation_valid():
     bar = EquityBar(
         symbol='AAPL',
         timestamp=datetime.now(),
@@ -52,7 +52,33 @@ def test_equity_bar_validation():
     assert validate_equity_bar(bar) is True
 
 
-def test_options_contract_validation():
+def test_equity_bar_validation_negative_prices():
+    bar = EquityBar(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        open=-100.0,
+        high=105.0,
+        low=95.0,
+        close=102.0,
+        volume=1000
+    )
+    assert validate_equity_bar(bar) is False
+
+
+def test_equity_bar_validation_negative_volume():
+    bar = EquityBar(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        open=100.0,
+        high=105.0,
+        low=95.0,
+        close=102.0,
+        volume=-1000
+    )
+    assert validate_equity_bar(bar) is False
+
+
+def test_options_contract_validation_valid():
     contract = OptionsContract(
         symbol='AAPL',
         timestamp=datetime.now(),
@@ -69,20 +95,7 @@ def test_options_contract_validation():
     assert validate_options_contract(contract) is True
 
 
-def test_invalid_equity_bar_validation():
-    bar = EquityBar(
-        symbol='AAPL',
-        timestamp=datetime.now(),
-        open=-100.0,
-        high=105.0,
-        low=95.0,
-        close=102.0,
-        volume=1000
-    )
-    assert validate_equity_bar(bar) is False
-
-
-def test_invalid_options_contract_validation():
+def test_options_contract_validation_negative_strike():
     contract = OptionsContract(
         symbol='AAPL',
         timestamp=datetime.now(),
@@ -95,5 +108,124 @@ def test_invalid_options_contract_validation():
         volume=100,
         open_interest=500,
         iv=0.2
+    )
+    assert validate_options_contract(contract) is False
+
+
+def test_options_contract_validation_negative_volume():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='call',
+        bid=1.0,
+        ask=1.2,
+        last=1.1,
+        volume=-100,
+        open_interest=500,
+        iv=0.2
+    )
+    assert validate_options_contract(contract) is False
+
+
+def test_options_contract_validation_negative_open_interest():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='call',
+        bid=1.0,
+        ask=1.2,
+        last=1.1,
+        volume=100,
+        open_interest=-500,
+        iv=0.2
+    )
+    assert validate_options_contract(contract) is False
+
+
+def test_options_contract_validation_invalid_put_call():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='put',
+        bid=1.0,
+        ask=1.2,
+        last=1.1,
+        volume=100,
+        open_interest=500,
+        iv=0.2
+    )
+    assert validate_options_contract(contract) is True  # This should be True as 'put' is valid
+
+
+def test_options_contract_validation_invalid_put_call_value():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='invalid',
+        bid=1.0,
+        ask=1.2,
+        last=1.1,
+        volume=100,
+        open_interest=500,
+        iv=0.2
+    )
+    assert validate_options_contract(contract) is False
+
+
+def test_options_contract_validation_negative_bid():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='call',
+        bid=-1.0,
+        ask=1.2,
+        last=1.1,
+        volume=100,
+        open_interest=500,
+        iv=0.2
+    )
+    assert validate_options_contract(contract) is False
+
+
+def test_options_contract_validation_negative_ask():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='call',
+        bid=1.0,
+        ask=-1.2,
+        last=1.1,
+        volume=100,
+        open_interest=500,
+        iv=0.2
+    )
+    assert validate_options_contract(contract) is False
+
+
+def test_options_contract_validation_negative_iv():
+    contract = OptionsContract(
+        symbol='AAPL',
+        timestamp=datetime.now(),
+        strike=100.0,
+        expiry=datetime.now(),
+        put_call='call',
+        bid=1.0,
+        ask=1.2,
+        last=1.1,
+        volume=100,
+        open_interest=500,
+        iv=-0.2
     )
     assert validate_options_contract(contract) is False

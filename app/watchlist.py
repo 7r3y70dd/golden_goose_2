@@ -3,8 +3,8 @@ from typing import List
 
 def get_watchlist_symbols() -> List[str]:
     """
-    Returns a list of symbols from the watchlist.
-    In a real implementation, this might read from a file, database, or API.
+    Load watchlist symbols from a central source.
     """
-    # Example watchlist - in practice this would come from a data source
+    # This is a placeholder implementation
+    # In a real system, this would load from a file, database, or API
     return ["AAPL", "MSFT", "GOOGL"]

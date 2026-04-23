@@ -1,57 +1,39 @@
-import pytest
+import unittest
 from unittest.mock import patch, MagicMock
-from app.data.jobs.ingest_watchlist import ingest_watchlist_data, fetch_and_save_equity_data, fetch_and_save_options_data
+from app.data.jobs.ingest_watchlist import ingest_watchlist_data
 
 
-def test_fetch_and_save_equity_data_success():
-    with patch('app.data.jobs.ingest_watchlist.save_equity_data') as mock_save:
-        mock_save.return_value = None
-        result = fetch_and_save_equity_data("AAPL")
-        assert result is True
+class TestIngestWatchlist(unittest.TestCase):
 
+    @patch('app.data.jobs.ingest_watchlist.get_watchlist_symbols')
+    @patch('app.data.jobs.ingest_watchlist.get_provider')
+    def test_ingest_watchlist_data_success(self, mock_provider, mock_symbols):
+        # Setup
+        mock_symbols.return_value = ['AAPL']
+        mock_provider_instance = MagicMock()
+        mock_provider.return_value = mock_provider_instance
+        mock_provider_instance.get_equity_data.return_value = {'symbol': 'AAPL', 'open': 100.0}
+        mock_provider_instance.get_options_data.return_value = [{'symbol': 'AAPL', 'strike': 100.0}]
 
-def test_fetch_and_save_equity_data_failure():
-    with patch('app.data.jobs.ingest_watchlist.save_equity_data') as mock_save:
-        mock_save.side_effect = Exception("Database error")
-        result = fetch_and_save_equity_data("AAPL")
-        assert result is False
+        # Execute
+        ingest_watchlist_data()
 
+        # Verify
+        mock_provider_instance.get_equity_data.assert_called_once_with('AAPL')
+        mock_provider_instance.get_options_data.assert_called_once_with('AAPL')
 
-def test_fetch_and_save_options_data_success():
-    with patch('app.data.jobs.ingest_watchlist.save_options_data') as mock_save:
-        mock_save.return_value = None
-        result = fetch_and_save_options_data("AAPL")
-        assert result is True
+    @patch('app.data.jobs.ingest_watchlist.get_watchlist_symbols')
+    @patch('app.data.jobs.ingest_watchlist.get_provider')
+    def test_ingest_watchlist_data_failure(self, mock_provider, mock_symbols):
+        # Setup
+        mock_symbols.return_value = ['AAPL']
+        mock_provider_instance = MagicMock()
+        mock_provider.return_value = mock_provider_instance
+        mock_provider_instance.get_equity_data.side_effect = Exception("Network error")
 
+        # Execute
+        ingest_watchlist_data()
 
-def test_fetch_and_save_options_data_failure():
-    with patch('app.data.jobs.ingest_watchlist.save_options_data') as mock_save:
-        mock_save.side_effect = Exception("Database error")
-        result = fetch_and_save_options_data("AAPL")
-        assert result is False
-
-
-def test_ingest_watchlist_data_success():
-    with patch('app.data.jobs.ingest_watchlist.get_watchlist_symbols') as mock_symbols,
-         patch('app.data.jobs.ingest_watchlist.fetch_and_save_equity_data') as mock_equity,
-         patch('app.data.jobs.ingest_watchlist.fetch_and_save_options_data') as mock_options:
-        
-        mock_symbols.return_value = ["AAPL"]
-        mock_equity.return_value = True
-        mock_options.return_value = True
-        
-        ingest_watchlist_data(retries=1)
-        # If we reach here without exception, test passes
-
-
-def test_ingest_watchlist_data_failure():
-    with patch('app.data.jobs.ingest_watchlist.get_watchlist_symbols') as mock_symbols,
-         patch('app.data.jobs.ingest_watchlist.fetch_and_save_equity_data') as mock_equity,
-         patch('app.data.jobs.ingest_watchlist.fetch_and_save_options_data') as mock_options:
-        
-        mock_symbols.return_value = ["AAPL"]
-        mock_equity.return_value = False
-        mock_options.return_value = False
-        
-        ingest_watchlist_data(retries=1)
-        # If we reach here without exception, test passes
+        # Verify
+        # The function should not crash even if one symbol fails
+        mock_provider_instance.get_equity_data.assert_called_once_with('AAPL')

@@ -17,3 +17,13 @@ The application uses typed schemas for market data including equity bars and opt
 - `app/data/schemas.py` - Contains data models for equity bars and options contracts
 - `app/data/validators.py` - Contains validation helpers for market data
 - `tests/test_data_schemas.py` - Unit tests for data schemas and validators
+
+## Data Providers
+
+The application uses a provider abstraction to support multiple market data backends.
+
+### Files
+
+- `app/data/providers/base.py` - Abstract base class for market data providers
+- `app/data/providers/mock.py` - Mock implementation for development and testing
+- `tests/test_provider_interface.py` - Unit tests for provider interface and mock implementation

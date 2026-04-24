@@ -3,7 +3,6 @@ from typing import List, Optional
 from app.data.schemas import EquityBar, OptionsContract
 from app.data.storage import MarketDataStorage
 
-
 class MarketDataRepository:
     """
     Repository for accessing market data.

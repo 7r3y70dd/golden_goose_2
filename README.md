@@ -27,3 +27,13 @@ The application uses a provider abstraction to support multiple market data back
 - `app/data/providers/base.py` - Abstract base class for market data providers
 - `app/data/providers/mock.py` - Mock implementation for development and testing
 - `tests/test_provider_interface.py` - Unit tests for provider interface and mock implementation
+
+## Data Storage
+
+The application uses a parquet-based storage layer for persisting historical market data.
+
+### Files
+
+- `app/data/storage.py` - Storage layer implementation using parquet files
+- `app/data/repository.py` - Repository layer providing clean interface for data access
+- `tests/test_storage.py` - Unit tests for storage and repository functionality

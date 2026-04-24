@@ -1,65 +1,59 @@
-from datetime import datetime
+import logging
+from pathlib import Path
 from typing import List, Optional
-from app.data.schemas import EquityBar, OptionsContract
-from app.data.storage import MarketDataStorage
 
-class MarketDataRepository:
-    """
-    Repository for accessing market data.
-    
-    Provides a clean interface for reading and writing equity bars and options
-    data using the underlying storage layer.
-    """
-    
-    def __init__(self, storage_path: str = "./data"):
-        self.storage = MarketDataStorage(storage_path)
-        
-    def save_bars(self, symbol: str, bars: List[EquityBar]) -> None:
-        """
-        Save equity bars for a symbol.
-        
-        Args:
-            symbol: Stock symbol
-            bars: List of EquityBar objects to save
-        """
-        self.storage.save_bars(symbol, bars)
-        
-    def load_bars(self, symbol: str, start_date: Optional[datetime] = None, 
-                  end_date: Optional[datetime] = None) -> List[EquityBar]:
-        """
-        Load equity bars for a symbol.
-        
-        Args:
-            symbol: Stock symbol
-            start_date: Optional start date filter
-            end_date: Optional end date filter
-            
-        Returns:
-            List of EquityBar objects
-        """
-        return self.storage.load_bars(symbol, start_date, end_date)
-        
-    def save_options(self, symbol: str, options: List[OptionsContract]) -> None:
-        """
-        Save options contracts for a symbol.
-        
-        Args:
-            symbol: Stock symbol
-            options: List of OptionsContract objects to save
-        """
-        self.storage.save_options(symbol, options)
-        
-    def load_options(self, symbol: str, start_date: Optional[datetime] = None, 
-                     end_date: Optional[datetime] = None) -> List[OptionsContract]:
-        """
-        Load options contracts for a symbol.
-        
-        Args:
-            symbol: Stock symbol
-            start_date: Optional start date filter
-            end_date: Optional end date filter
-            
-        Returns:
-            List of OptionsContract objects
-        """
-        return self.storage.load_options(symbol, start_date, end_date)
+import pandas as pd
+
+from app.data.schemas import EquityBar, OptionContract
+
+logger = logging.getLogger(__name__)
+
+
+class DataRepository:
+    def __init__(self, data_dir: str = "data"):
+        self.data_dir = Path(data_dir)
+        self.data_dir.mkdir(exist_ok=True)
+
+    def save_historical_bars(self, symbol: str, bars: List[EquityBar]) -> None:
+        """Save historical bars to parquet file."""
+        if not bars:
+            logger.warning(f"No bars to save for {symbol}")
+            return
+
+        df = pd.DataFrame([bar.dict() for bar in bars])
+        file_path = self.data_dir / f"{symbol}_bars.parquet"
+        df.to_parquet(file_path, index=False)
+        logger.info(f"Saved {len(bars)} bars for {symbol}")
+
+    def save_options_chain(self, symbol: str, options_chain: List[OptionContract]) -> None:
+        """Save options chain to parquet file."""
+        if not options_chain:
+            logger.warning(f"No options to save for {symbol}")
+            return
+
+        df = pd.DataFrame([option.dict() for option in options_chain])
+        file_path = self.data_dir / f"{symbol}_options.parquet"
+        df.to_parquet(file_path, index=False)
+        logger.info(f"Saved {len(options_chain)} options for {symbol}")
+
+    def load_historical_bars(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[EquityBar]:
+        """Load historical bars from parquet file."""
+        file_path = self.data_dir / f"{symbol}_bars.parquet"
+        if not file_path.exists():
+            logger.warning(f"No bars found for {symbol}")
+            return []
+
+        df = pd.read_parquet(file_path)
+        # Convert back to EquityBar objects
+        return [EquityBar(**row) for _, row in df.iterrows()]
+
+    def load_options_chain(self, symbol: str) -> List[OptionContract]:
+        """Load options chain from parquet file."""
+        file_path = self.data_dir / f"{symbol}_options.parquet"
+        if not file_path.exists():
+            logger.warning(f"No options found for {symbol}")
+            return []
+
+        df = pd.read_parquet(file_path)
+        # Convert back to OptionContract objects
+        return [OptionContract(**row) for _, row in df.iterrows()]
